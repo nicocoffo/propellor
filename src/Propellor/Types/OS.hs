@@ -8,6 +8,7 @@ module Propellor.Types.OS (
 	DebianSuite(..),
 	FreeBSDRelease(..),
 	FBSDVersion(..),
+	MacOSRelease(..),
 	isStable,
 	Release,
 	Architecture(..),
@@ -34,6 +35,7 @@ data Distribution
 	= Debian DebianKernel DebianSuite
 	| Buntish Release -- ^ A well-known Debian derivative founded by a space tourist. The actual name of this distribution is not used in Propellor per <http://joeyh.name/blog/entry/trademark_nonsense/>
 	| FreeBSD FreeBSDRelease
+	| MacOS MacOSRelease
 	deriving (Show, Eq)
 
 -- | Properties can target one or more OS's; the targets are part
@@ -42,12 +44,14 @@ data TargetOS
 	= OSDebian
 	| OSBuntish
 	| OSFreeBSD
+	| OSMacOS
 	deriving (Show, Eq, Ord)
 
 systemToTargetOS :: System -> TargetOS
 systemToTargetOS (System (Debian _ _) _) = OSDebian
 systemToTargetOS (System (Buntish _) _) = OSBuntish
 systemToTargetOS (System (FreeBSD _) _) = OSFreeBSD
+systemToTargetOS (System (MacOS _) _) = OSMacOS
 
 -- | Most of Debian ports are based on Linux. There also exist hurd-i386,
 -- kfreebsd-i386, kfreebsd-amd64 ports
@@ -76,6 +80,9 @@ instance Show FBSDVersion where
 	show FBSD101 = "10.1-RELEASE"
 	show FBSD102 = "10.2-RELEASE"
 	show FBSD093 = "9.3-RELEASE"
+
+data MacOSRelease = ElCapitan
+	deriving (Show, Eq)
 
 isStable :: DebianSuite -> Bool
 isStable (Stable _) = True

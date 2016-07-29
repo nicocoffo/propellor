@@ -8,6 +8,7 @@ module Propellor.Types.MetaTypes (
 	Debian,
 	Buntish,
 	FreeBSD,
+	MacOS,
 	HasInfo,
 	MetaTypes,
 	type (+),
@@ -35,7 +36,7 @@ data MetaType
 	deriving (Show, Eq, Ord)
 
 -- | Any unix-like system
-type UnixLike = MetaTypes '[ 'Targeting 'OSDebian, 'Targeting 'OSBuntish, 'Targeting 'OSFreeBSD ]
+type UnixLike = MetaTypes '[ 'Targeting 'OSDebian, 'Targeting 'OSBuntish, 'Targeting 'OSFreeBSD, 'Targeting 'OSMacOS ]
 -- | Any linux system
 type Linux = MetaTypes '[ 'Targeting 'OSDebian, 'Targeting 'OSBuntish ]
 -- | Debian and derivatives.
@@ -43,6 +44,7 @@ type DebianLike = MetaTypes '[ 'Targeting 'OSDebian, 'Targeting 'OSBuntish ]
 type Debian = MetaTypes '[ 'Targeting 'OSDebian ]
 type Buntish = MetaTypes '[ 'Targeting 'OSBuntish ]
 type FreeBSD = MetaTypes '[ 'Targeting 'OSFreeBSD ]
+type MacOS = MetaTypes '[ 'Targeting 'OSMacOS ]
 
 -- | Used to indicate that a Property adds Info to the Host where it's used.
 type HasInfo = MetaTypes '[ 'WithInfo ]
@@ -58,16 +60,19 @@ data instance Sing (x :: MetaType) where
 	OSDebianS :: Sing ('Targeting 'OSDebian)
 	OSBuntishS :: Sing ('Targeting 'OSBuntish)
 	OSFreeBSDS :: Sing ('Targeting 'OSFreeBSD)
+	OSMacOSS :: Sing ('Targeting 'OSMacOS)
 	WithInfoS :: Sing 'WithInfo
 instance SingI ('Targeting 'OSDebian) where sing = OSDebianS
 instance SingI ('Targeting 'OSBuntish) where sing = OSBuntishS
 instance SingI ('Targeting 'OSFreeBSD) where sing = OSFreeBSDS
+instance SingI ('Targeting 'OSMacOS) where sing = OSMacOSS
 instance SingI 'WithInfo where sing = WithInfoS
 instance SingKind ('KProxy :: KProxy MetaType) where
 	type DemoteRep ('KProxy :: KProxy MetaType) = MetaType
 	fromSing OSDebianS = Targeting OSDebian
 	fromSing OSBuntishS = Targeting OSBuntish
 	fromSing OSFreeBSDS = Targeting OSFreeBSD
+	fromSing OSMacOSS = Targeting OSMacOS
 	fromSing WithInfoS = WithInfo
 
 -- | Convenience type operator to combine two `MetaTypes` lists.
@@ -113,7 +118,7 @@ type instance CheckCombinable (l1 ': list1) (l2 ': list2) =
 	CheckCombinable' (Combine (l1 ': list1) (l2 ': list2))
 type family CheckCombinable' (combinedlist :: [a]) :: CheckCombine
 type instance CheckCombinable' '[] = 'CannotCombineTargets
-type instance CheckCombinable' (a ': rest) 
+type instance CheckCombinable' (a ': rest)
 	= If (IsTarget a)
 		'CanCombine
 		(CheckCombinable' rest)
@@ -164,7 +169,7 @@ type instance Union (a ': rest) list2 =
 -- | Type level intersection. Duplicate list items are eliminated.
 type family Intersect (list1 :: [a]) (list2 :: [a]) :: [a]
 type instance Intersect '[] list2 = '[]
-type instance Intersect (a ': rest) list2 = 
+type instance Intersect (a ': rest) list2 =
 	If (Elem a list2 && Not (Elem a rest))
 		(a ': Intersect rest list2)
 		(Intersect rest list2)
@@ -180,12 +185,21 @@ type instance EqT ('Targeting a) 'WithInfo       = 'False
 type instance EqT 'OSDebian  'OSDebian  = 'True
 type instance EqT 'OSBuntish 'OSBuntish = 'True
 type instance EqT 'OSFreeBSD 'OSFreeBSD = 'True
+type instance EqT 'OSMacOS   'OSMacOS   = 'True
 type instance EqT 'OSDebian  'OSBuntish = 'False
 type instance EqT 'OSDebian  'OSFreeBSD = 'False
 type instance EqT 'OSBuntish 'OSDebian  = 'False
 type instance EqT 'OSBuntish 'OSFreeBSD = 'False
 type instance EqT 'OSFreeBSD 'OSDebian  = 'False
 type instance EqT 'OSFreeBSD 'OSBuntish = 'False
+type instance EqT 'OSMacOS   'OSDebian  = 'False
+type instance EqT 'OSMacOS   'OSBuntish = 'False
+type instance EqT 'OSMacOS   'OSFreeBSD = 'False
+type instance EqT 'OSFreeBSD 'OSMacOS   = 'False
+type instance EqT 'OSBuntish 'OSMacOS   = 'False
+type instance EqT 'OSDebian  'OSMacOS   = 'False
+
+
 -- More modern version if the combinatiorial explosion gets too bad later:
 --
 -- type family Eq (a :: MetaType) (b :: MetaType) where
@@ -210,4 +224,3 @@ type instance    'False && 'True  = 'False
 type family Not (a :: Bool) :: Bool
 type instance Not 'False = 'True
 type instance Not 'True = 'False
-
