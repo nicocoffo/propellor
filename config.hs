@@ -7,5 +7,5 @@ main = defaultMain [macbook]
 
 macbook :: Host
 macbook = host "localhost" $ props
-	& Brew.cmdProperty "info" ["wget"]
+	& Brew.installed (Brew.Formula "wget")
 	& File.dirExists "/Users/ncoughlin/testa"
